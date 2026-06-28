@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fencing">
+  <title>Diego Calderon — Fencing Calendar</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #0f172a;
+      --navy-mid: #1e3a5f;
+      --white: #ffffff;
+      --gray: #6b7280;
+      --gray-lt: #f3f4f6;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--navy);
+      color: white;
+      padding: 12px 16px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .app-header-title { font-size: 17px; font-weight: 700; }
+    .app-header-sub   { font-size: 11px; color: #93c5fd; margin-top: 1px; }
+
+    /* ── Content ── */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Tab Bar ── */
+    .tab-bar {
+      display: flex;
+      background: var(--navy);
+      border-top: 1px solid #1e3a5f;
+      flex-shrink: 0;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #64748b;
+      padding: 10px 4px 8px;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: color 0.15s;
+    }
+    .tab-btn .tab-icon { font-size: 20px; }
+    .tab-btn.active { color: #60a5fa; }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--navy);
+      color: white;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .hero-title { font-size: 20px; font-weight: 700; }
+    .hero-sub   { font-size: 12px; color: #93c5fd; margin-top: 4px; }
+
+    /* ── Stats Grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 12px;
+      border-left: 4px solid;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .stat-label { font-size: 9px; font-weight: 700; color: var(--gray); letter-spacing: .5px; text-transform: uppercase; }
+    .stat-val   { font-size: 22px; font-weight: 800; margin: 2px 0; }
+    .stat-sub   { font-size: 10px; color: var(--gray); }
+
+    /* ── Section Title ── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy-mid);
+      margin: 16px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    /* ── Progress ── */
+    .progress-card {
+      background: white;
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      margin-bottom: 4px;
+    }
+    .progress-row  { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .progress-pts  { font-size: 18px; font-weight: 800; color: #2563eb; }
+    .progress-pct  { font-size: 11px; color: var(--gray); }
+    .progress-bar-bg   { background: #e5e7eb; border-radius: 99px; height: 10px; }
+    .progress-bar-fill { background: linear-gradient(90deg, #2563eb, #60a5fa); border-radius: 99px; height: 10px; transition: width .5s; }
+    .progress-goal { font-size: 11px; color: var(--gray); margin-top: 6px; }
+
+    /* ── Event Cards ── */
+    .event-card {
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .target-card { box-shadow: 0 2px 8px rgba(37,99,235,.25); }
+    .ec-header { padding: 12px; }
+    .ec-top    { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .ec-tier   { font-size: 11px; font-weight: 700; }
+    .ec-badge  { color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+    .ec-name   { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 5px; line-height: 1.3; }
+    .ec-meta   { font-size: 12px; color: var(--gray); margin-bottom: 3px; }
+    .ec-footer { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .ec-pts    { font-size: 13px; font-weight: 700; background: white; padding: 2px 10px; border-radius: 99px; border: 1px solid currentColor; }
+    .ec-notes  { font-size: 11px; color: var(--gray); flex: 1; }
+
+    /* ── Info Cards ── */
+    .info-card { padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 8px; }
+    .info-card.green  { background: #dcfce7; color: #166534; }
+    .info-card.red    { background: #fee2e2; color: #991b1b; }
+    .info-card.orange { background: #ffedd5; color: #9a3412; }
+
+    /* ── Filter Bar ── */
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-btn {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      color: var(--gray);
+    }
+    .filter-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+
+    /* ── Month Header ── */
+    .month-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray);
+      letter-spacing: .6px;
+      margin: 16px 0 8px;
+    }
+
+    /* ── Points Tab ── */
+    .source-note {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 11px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .pts-tier {
+      border: 1px solid;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .pts-tier-name { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+    .pts-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 2px 8px;
+      padding: 8px 0;
+      border-top: 1px solid rgba(0,0,0,.06);
+    }
+    .pts-highlight { background: #fef9c3; border-radius: 6px; padding: 8px; margin: 0 -4px; }
+    .pts-place { font-size: 13px; font-weight: 600; color: var(--navy); }
+    .pts-val   { font-size: 18px; font-weight: 800; text-align: right; grid-row: 1; grid-column: 2; }
+    .pts-src   { font-size: 10px; color: var(--gray); grid-row: 2; grid-column: 2; text-align: right; }
+    .pts-note  { font-size: 11px; color: var(--gray); grid-row: 2; grid-column: 1; }
+
+    /* ── Scenarios ── */
+    .scenario-card {
+      background: white;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .scenario-name   { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .scenario-row    { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .scenario-earned { font-size: 16px; font-weight: 800; color: #16a34a; }
+    .scenario-arrow  { color: var(--gray); }
+    .scenario-total  { font-size: 16px; font-weight: 800; color: #2563eb; }
+    .scenario-note   { font-size: 11px; color: var(--gray); }
+
+    .empty { text-align: center; color: var(--gray); padding: 40px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div class="app-header">
+    <div>
+      <div class="app-header-title">🤺 Fencing Calendar</div>
+      <div class="app-header-sub">Diego Calderon · 2026-27 Season</div>
+    </div>
+  </div>
+
+  <div id="content"></div>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="home"   onclick="setTab('home')">
+      <span class="tab-icon">🏠</span>Home
+    </button>
+    <button class="tab-btn" data-tab="events" onclick="setTab('events')">
+      <span class="tab-icon">📅</span>Events
+    </button>
+    <button class="tab-btn" data-tab="points" onclick="setTab('points')">
+      <span class="tab-icon">🏆</span>Points
+    </button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
