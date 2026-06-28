@@ -151,14 +151,11 @@ function renderGrid() {
           const isToday = key === todayStr;
           const ev = evs[0];
           const t = ev ? TIER[ev.tier] : null;
-          const shortName = ev ? ev.name.replace("Division I Men's Épée","Div I").replace("— Division I","").replace("Division I","Div I").replace("National Championship","Natl Champ").trim() : "";
-          const shortLoc  = ev ? ev.loc.replace("Orange County Convention Center","OCCC").replace("First Financial Center","FFC").split("—")[0].trim() : "";
-          html += `<div class="grid-cell ${isToday?"grid-today":""} ${ev?"grid-cell-ev":""}"
+          html += `<div class="grid-cell ${isToday?"grid-today":""}"
             style="${t ? `background:${t.bg};border:1px solid ${t.border}` : ""}"
             ${ev ? `onclick="showEventPopup(${JSON.stringify(JSON.stringify(ev))})"` : ""}>
             <div class="grid-dom" style="${isToday?"color:#fff;background:#2563eb;border-radius:99px":""}">${dom}</div>
-            ${ev ? `<div class="grid-ev-name" style="color:${t.fg}">${t.emoji} ${shortName}</div>
-                    <div class="grid-ev-loc" style="color:${t.fg}">${shortLoc}</div>` : ""}
+            ${ev ? `<div class="grid-ev-dot">${t.emoji}</div>` : ""}
           </div>`;
         }
       }
