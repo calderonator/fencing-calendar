@@ -41,18 +41,37 @@ const TIER = {
   system:   { emoji:"⚙️", label:"System",             bg:"#e0e7ff", fg:"#3730a3", border:"#6366f1" },
 };
 
-// ── Regional locations (confirmed from Airtable / USA Fencing) ─
+// ── Regional locations (from Airtable 26-27 Reg Cal List) ─────
+// D1A = Diego-eligible Senior Épée event exists that weekend
 const REGIONAL_LOCS = {
-  "2026-08-22":"Various, USA","2026-09-06":"Various, USA","2026-09-12":"Various, USA",
-  "2026-09-19":"Various, USA","2026-09-26":"Various, USA","2026-10-03":"Various, USA",
-  "2026-10-17":"Various, USA","2026-10-24":"Various, USA","2026-11-07":"Various, USA",
-  "2026-11-14":"Various, USA","2026-12-05":"Various, USA","2026-12-12":"Various, USA",
-  "2027-01-09":"Various, USA","2027-01-16":"Various, USA","2027-01-23":"Various, USA",
-  "2027-02-06":"Various, USA","2027-02-13":"Various, USA","2027-02-20":"Various, USA",
-  "2027-02-27":"Various, USA","2027-03-06":"Various, USA","2027-03-13":"Various, USA",
-  "2027-03-20":"Various, USA","2027-03-27":"Various, USA","2027-04-10":"Various, USA",
-  "2027-04-17":"Various, USA","2027-04-24":"Various, USA","2027-05-01":"Various, USA",
-  "2027-05-09":"Various, USA",
+  "2026-08-22":"Edison, NJ (D1A avail.)",
+  "2026-09-06":"Ontario, CA (D1A avail.)",
+  "2026-09-12":"Air Force Academy, CO (D1A avail.)",
+  "2026-09-19":"La Jolla, CA · Myrtle Beach, SC (D1A)",
+  "2026-09-26":"Evanston, IL · Suffern, NY (D1A)",
+  "2026-10-03":"Seattle, WA (D1A avail.)",
+  "2026-10-17":"Houston, TX (D1A avail.)",
+  "2026-10-24":"Santa Clara, CA (D1A avail.)",
+  "2026-11-07":"Grand Rapids, MI (D1A avail.)",
+  "2026-11-14":"Metairie, LA (D1A avail.)",
+  "2026-12-05":"Various, USA (youth/JNR only)",
+  "2026-12-12":"Myrtle Beach, SC (D1A avail.)",
+  "2027-01-09":"Various, USA (youth/JNR only)",
+  "2027-01-16":"Bellevue, WA · San Diego, CA (D1A)",
+  "2027-01-23":"Jacksonville, FL (D1A avail.)",
+  "2027-02-06":"Providence, RI (D1A avail.)",
+  "2027-02-13":"Various, USA (youth/JNR only)",
+  "2027-02-20":"Various, USA (youth/JNR only)",
+  "2027-02-27":"Phoenixville, PA (D1A avail.)",
+  "2027-03-06":"Various, USA (youth/JNR only)",
+  "2027-03-13":"Grand Rapids, MI · College Park, MD (D1A)",
+  "2027-03-20":"Various, USA (youth/JNR only)",
+  "2027-03-27":"Libertyville, IL · Dallas, TX (D1A)",
+  "2027-04-10":"Houston, TX (D1A avail.)",
+  "2027-04-17":"Various, USA (youth/JNR only)",
+  "2027-04-24":"Various, USA (youth/JNR only)",
+  "2027-05-01":"Tigard, OR (D1A avail.)",
+  "2027-05-09":"Various, USA (youth/JNR only)",
 };
 
 // ── State ─────────────────────────────────────────────────────
