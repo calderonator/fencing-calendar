@@ -457,12 +457,138 @@ function setFilter(f) {
   renderPage();
 }
 
+// ── Airport lookup (city → nearest IATA) ─────────────────────
+const AIRPORTS = {
+  "Orlando":            "MCO", "Columbus":           "CMH",
+  "Oklahoma City":      "OKC", "Cincinnati":         "CVG",
+  "Edison":             "EWR", "Newark":             "EWR",
+  "Ontario":            "ONT", "La Jolla":           "SAN",
+  "San Diego":          "SAN", "Myrtle Beach":       "MYR",
+  "Evanston":           "ORD", "Libertyville":       "ORD",
+  "Grand Rapids":       "GRR", "Suffern":            "EWR",
+  "Seattle":            "SEA", "Bellevue":           "SEA",
+  "Tigard":             "PDX", "Portland":           "PDX",
+  "Houston":            "IAH", "Dallas":             "DFW",
+  "Round Rock":         "AUS", "Austin":             "AUS",
+  "Santa Clara":        "SJC", "San Jose":           "SJC",
+  "Metairie":           "MSY", "New Orleans":        "MSY",
+  "Air Force Academy":  "COS", "Colorado Springs":   "COS",
+  "Denver":             "DEN", "Virginia Beach":     "ORF",
+  "Waterford":          "DTW", "Grand Rapids":       "GRR",
+  "Jacksonville":       "JAX", "Providence":         "PVD",
+  "Phoenixville":       "PHL", "Philadelphia":       "PHL",
+  "College Park":       "BWI", "Fredericksburg":     "DCA",
+  "Henderson":          "LAS", "Las Vegas":          "LAS",
+  "Atlantic City":      "ACY", "Rochester":          "ROC",
+  "Hartford":           "BDL", "New Haven":          "HVN",
+  "Secaucus":           "EWR", "Danvers":            "BOS",
+  "Torrance":           "LAX", "Pasadena":           "LAX",
+  "Pomona":             "LAX", "Anaheim":            "LAX",
+  "Suwanee":            "ATL", "Tampa":              "TPA",
+  "Oxon Hill":          "DCA", "Richmond":           "RIC",
+  "Saint Paul":         "MSP", "Minneapolis":        "MSP",
+  "Carrollton":         "DFW", "El Paso":            "ELP",
+  "Liberty Township":   "CVG", "Lewisville":         "DFW",
+  "Norton":             "BOS", "Newtown":            "HVN",
+  "Hillsborough Township": "EWR", "State College":   "SCE",
+  "Palm Springs":       "PSP",
+};
+
+let flightFrom = "MAD";
+
+function cityToAirport(loc) {
+  const city = (loc || "").split(",")[0].split("·")[0].trim();
+  return AIRPORTS[city] || null;
+}
+
+function flightDateStr(dateStr, offsetDays) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + offsetDays);
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+}
+
+function googleFlightsUrl(from, to, depart, ret) {
+  return `https://www.google.com/flights#flt=${from}.${to}.${depart}*${to}.${from}.${ret};c:USD;e:1;s:0*1;sd:1;t:f`;
+}
+
+function renderFlights() {
+  const evs = allEvents().filter(e =>
+    ["target","national","intl","regional","local"].includes(e.tier) &&
+    e.loc && e.loc !== "TBA" && !e.loc.includes("USA-wide")
+  );
+
+  const airports = ["MAD","VLC","BCN"];
+
+  return `
+    <div style="margin-bottom:12px">
+      <div class="section-title" style="margin-top:4px">Departure Airport</div>
+      <div style="display:flex;gap:8px">
+        ${airports.map(a => `
+          <button class="filter-btn ${flightFrom===a?"active":""}"
+            onclick="flightFrom='${a}';renderPage()"
+            style="flex:1;text-align:center;font-size:14px;font-weight:700">
+            ${a==="MAD"?"🛫 Madrid":a==="VLC"?"🛫 Valencia":"🛫 Barcelona"}
+          </button>`).join("")}
+      </div>
+    </div>
+
+    <div class="source-note">
+      Tap <b>Search Flights</b> to open Google Flights with airports and dates pre-filled.
+      Prices shown are Google Flights estimates — book directly with the airline.
+    </div>
+
+    ${evs.map(ev => {
+      const iata = cityToAirport(ev.loc);
+      const t = TIER[ev.tier] || TIER.national;
+      const depart = flightDateStr(ev.date, -2);
+      const ret    = flightDateStr(ev.date, 4);
+      const url    = iata ? googleFlightsUrl(flightFrom, iata, depart, ret) : null;
+      const city   = (ev.loc || "").split(",")[0].split("·")[0].trim();
+
+      return `
+        <div class="event-card" style="margin-bottom:10px;overflow:hidden">
+          <div class="ec-header">
+            <div class="ec-top">
+              <span class="ec-tier" style="color:${t.fg}">${t.emoji} ${t.label}</span>
+              <span style="font-size:11px;color:#6b7280">${fmtDate(ev.date)}</span>
+            </div>
+            <div class="ec-name">${ev.name}</div>
+            <div class="ec-meta">📍 ${ev.loc}</div>
+          </div>
+          <div style="padding:0 12px 12px;display:flex;gap:8px;flex-wrap:wrap">
+            ${url ? `
+              <a href="${url}" target="_blank" rel="noopener"
+                style="flex:1;display:block;background:#1d4ed8;color:white;text-align:center;
+                       padding:10px;border-radius:8px;font-size:13px;font-weight:700;
+                       text-decoration:none">
+                ✈️ Search Flights → ${iata}
+              </a>` : `
+              <span style="flex:1;text-align:center;padding:10px;border-radius:8px;
+                           background:#f3f4f6;color:#9ca3af;font-size:13px">
+                ✈️ ${city} — airport not mapped yet
+              </span>`}
+            ${url ? `
+              <a href="https://www.skyscanner.com/transport/flights/${flightFrom.toLowerCase()}/${iata.toLowerCase()}/${depart.replace(/-/g,"").slice(2)}/${ret.replace(/-/g,"").slice(2)}/?adults=1&cabinclass=economy"
+                target="_blank" rel="noopener"
+                style="background:#00a1df;color:white;text-align:center;
+                       padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;
+                       text-decoration:none">
+                Skyscanner
+              </a>` : ""}
+          </div>
+        </div>`;
+    }).join("")}
+    ${evs.length === 0 ? `<div class="empty">No upcoming events with locations.</div>` : ""}
+  `;
+}
+
 function renderPage() {
   const content = document.getElementById("content");
-  if (currentTab === "home")   content.innerHTML = renderHome();
-  if (currentTab === "events") content.innerHTML = renderEvents();
-  if (currentTab === "points") content.innerHTML = renderPoints();
-  if (currentTab === "grid")   content.innerHTML = renderGrid();
+  if (currentTab === "home")    content.innerHTML = renderHome();
+  if (currentTab === "events")  content.innerHTML = renderEvents();
+  if (currentTab === "points")  content.innerHTML = renderPoints();
+  if (currentTab === "grid")    content.innerHTML = renderGrid();
+  if (currentTab === "flights") content.innerHTML = renderFlights();
   content.scrollTop = 0;
 }
 

@@ -1,4 +1,4 @@
-const CACHE = "fencing-v11";
+const CACHE = "fencing-v12";
 const ASSETS = ["/", "/index.html", "/app.js", "/manifest.json", "/events.json"];
 
 self.addEventListener("install", e => {
