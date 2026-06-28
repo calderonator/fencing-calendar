@@ -20,7 +20,7 @@ const EVENTS = [
   { date:"2027-02-01", name:"February NAC — Division I Men's Épée (TBA)",  loc:"TBA",                                    tier:"national", pts:PTS.elite_win,  notes:"Date/location TBA — announced ~Sep 2026.", isNAC:true },
   { date:"2027-04-16", name:"April NAC + Division I National Championship", loc:"Cincinnati, OH — First Financial Center",tier:"national", pts:PTS.elite_win,  notes:"Highest-value domestic event. Apr 16–19, 2027.", isNAC:true },
   { date:"2027-06-27", name:"Summer Nationals / July Challenge",            loc:"TBA",                                    tier:"national", pts:PTS.elite_win,  notes:"Season-ending championship. TBA.", isNAC:true },
-  { date:"2026-10-03", name:"FIE World Cup (TBA)",                          loc:"TBA",                                    tier:"training", pts:PTS.intl,       notes:"International win = 4,000 pts. Accessible once top-12 USA.", isWorldCup:true },
+  { date:"2026-10-03", name:"FIE World Cup (TBA)",                          loc:"TBA",                                    tier:"intl",     pts:PTS.intl,       notes:"International win = 4,000 pts. Accessible once top-12 USA.", isWorldCup:true },
 ];
 
 const REGIONAL = [
@@ -35,6 +35,7 @@ const REGIONAL = [
 const TIER = {
   target:   { emoji:"🎯", label:"Primary Target",    bg:"#dbeafe", fg:"#1d4ed8", border:"#2563eb" },
   national: { emoji:"🇺🇸", label:"USA National",      bg:"#fef9c3", fg:"#92400e", border:"#d97706" },
+  intl:     { emoji:"🌍", label:"FIE International",  bg:"#f3e8ff", fg:"#6b21a8", border:"#9333ea" },
   local:    { emoji:"📍", label:"AskFred Local",      bg:"#dcfce7", fg:"#166534", border:"#16a34a" },
   regional: { emoji:"📋", label:"ROC Regional",       bg:"#ffedd5", fg:"#9a3412", border:"#ea580c" },
   training: { emoji:"🇪🇸", label:"Spain Training",    bg:"#ccfbf1", fg:"#115e59", border:"#0d9488" },
@@ -121,12 +122,13 @@ function allEvents() {
     if (!existing.has(key)) {
       existing.add(key);
       const tierMap = { local:"local", training:"training", worldcup:"intl", grandprix:"intl", satellite:"intl", championship:"national", intl:"intl" };
+      const mappedTier = ev.source === "RFEE" ? "training" : (tierMap[ev.tier] || "local");
       evs.push({
         ...ev,
-        tier: tierMap[ev.tier] || "local",
-        pts: ev.tier === "local" ? PTS.local_std : ev.tier === "training" ? 0 : PTS.intl,
-        isWorldCup: ["worldcup","grandprix","satellite","intl"].includes(ev.tier),
-        notes: ev.source === "FIE" ? "FIE international event." : ev.source === "RFEE" ? "Spain training event — 0 USA Trial pts." : "AskFred local event — check for D1A eligibility.",
+        tier: mappedTier,
+        pts: mappedTier === "local" ? PTS.local_std : mappedTier === "training" ? 0 : PTS.intl,
+        isWorldCup: ["intl"].includes(mappedTier),
+        notes: ev.source === "FIE" ? "FIE international event. Win = 4,000 pts." : ev.source === "RFEE" ? "Spain training event — 0 USA Trial pts." : "AskFred local event — check for D1A eligibility.",
       });
     }
   }
@@ -172,6 +174,7 @@ function renderGrid() {
   let html = `<div class="grid-legend">
     <span class="gl-item" style="background:#dbeafe;border-color:#2563eb">🎯 Target</span>
     <span class="gl-item" style="background:#fef9c3;border-color:#d97706">🇺🇸 National</span>
+    <span class="gl-item" style="background:#f3e8ff;border-color:#9333ea">🌍 Intl</span>
     <span class="gl-item" style="background:#ffedd5;border-color:#ea580c">📋 Regional</span>
     <span class="gl-item" style="background:#ccfbf1;border-color:#0d9488">🇪🇸 Spain</span>
   </div>`;
@@ -313,6 +316,7 @@ function renderEvents() {
     { key:"all",      label:"All" },
     { key:"target",   label:"🎯 Target" },
     { key:"national", label:"🇺🇸 National" },
+    { key:"intl",     label:"🌍 International" },
     { key:"regional", label:"📋 Regional" },
     { key:"training", label:"🇪🇸 Spain" },
   ];
