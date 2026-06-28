@@ -13,13 +13,14 @@ const PTS = {
 
 // ── Events ────────────────────────────────────────────────────
 const EVENTS = [
-  { date:"2026-08-01", name:"Trial Points System Activates",               loc:"USA-wide",                                      tier:"system",   pts:0,              notes:"2025-26 results carry over. New season begins." },
-  { date:"2026-10-09", name:"October NAC — Division I Men's Épée",         loc:"Orlando, FL — OCCC",                            tier:"target",   pts:PTS.elite_win,  notes:"🎯 PRIMARY TARGET. Elite win = 1,000 pts · National win = 200 pts." },
-  { date:"2026-11-20", name:"November NAC — Division I Men's Épée",        loc:"Columbus, OH",                                  tier:"national", pts:PTS.elite_win,  notes:"Strong Oct result may qualify for Elite." },
-  { date:"2027-01-08", name:"January NAC — Division I Men's Épée",         loc:"Oklahoma City, OK",                             tier:"national", pts:PTS.elite_win,  notes:"Third NAC of the season." },
-  { date:"2027-02-01", name:"February NAC — Division I Men's Épée (TBA)",  loc:"TBA",                                           tier:"tba",      pts:PTS.elite_win,  notes:"Date/location TBA — announced ~Sep 2026." },
-  { date:"2027-04-16", name:"April NAC + Division I National Championship", loc:"Cincinnati, OH — First Financial Center",       tier:"national", pts:PTS.elite_win,  notes:"Highest-value domestic event. Apr 16–19, 2027." },
-  { date:"2027-06-27", name:"Summer Nationals / July Challenge",            loc:"TBA",                                           tier:"tba",      pts:PTS.elite_win,  notes:"Season-ending championship. TBA." },
+  { date:"2026-08-01", name:"Trial Points System Activates",               loc:"USA-wide",                                tier:"system",   pts:0,              notes:"2025-26 results carry over. New season begins." },
+  { date:"2026-10-09", name:"October NAC — Division I Men's Épée",         loc:"Orlando, FL — OCCC",                     tier:"national", pts:PTS.elite_win,  notes:"Elite win = 1,000 pts · National win = 200 pts.", isNAC:true },
+  { date:"2026-11-20", name:"November NAC — Division I Men's Épée",        loc:"Columbus, OH",                           tier:"national", pts:PTS.elite_win,  notes:"Strong Oct result may qualify for Elite.", isNAC:true },
+  { date:"2027-01-08", name:"January NAC — Division I Men's Épée",         loc:"Oklahoma City, OK",                      tier:"national", pts:PTS.elite_win,  notes:"Third NAC of the season.", isNAC:true },
+  { date:"2027-02-01", name:"February NAC — Division I Men's Épée (TBA)",  loc:"TBA",                                    tier:"national", pts:PTS.elite_win,  notes:"Date/location TBA — announced ~Sep 2026.", isNAC:true },
+  { date:"2027-04-16", name:"April NAC + Division I National Championship", loc:"Cincinnati, OH — First Financial Center",tier:"national", pts:PTS.elite_win,  notes:"Highest-value domestic event. Apr 16–19, 2027.", isNAC:true },
+  { date:"2027-06-27", name:"Summer Nationals / July Challenge",            loc:"TBA",                                    tier:"national", pts:PTS.elite_win,  notes:"Season-ending championship. TBA.", isNAC:true },
+  { date:"2026-10-03", name:"FIE World Cup (TBA)",                          loc:"TBA",                                    tier:"training", pts:PTS.intl,       notes:"International win = 4,000 pts. Accessible once top-12 USA.", isWorldCup:true },
 ];
 
 const REGIONAL = [
@@ -102,7 +103,18 @@ function allEvents() {
     tier:"regional", pts:PTS.regional_win, source:"USA Fencing Regional",
     notes:"D1A events at this weekend count for Trial pts. Check Airtable for full schedule."
   }));
-  return evs.filter(e => daysUntil(e.date) >= 0).sort((a,b) => a.date.localeCompare(b.date));
+  const upcoming = evs.filter(e => daysUntil(e.date) >= 0).sort((a,b) => a.date.localeCompare(b.date));
+
+  // Dynamically assign Primary Target
+  const inTop12 = FENCER.rank <= 12;
+  const targetKey = inTop12 ? "isWorldCup" : "isNAC";
+  const targetEv = upcoming.find(e => e[targetKey]);
+  if (targetEv) {
+    targetEv.tier = "target";
+    targetEv.notes = "🎯 PRIMARY TARGET. " + targetEv.notes;
+  }
+
+  return upcoming;
 }
 
 // ── Render: Grid Calendar ─────────────────────────────────────
