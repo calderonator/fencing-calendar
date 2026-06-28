@@ -41,6 +41,20 @@ const TIER = {
   system:   { emoji:"⚙️", label:"System",             bg:"#e0e7ff", fg:"#3730a3", border:"#6366f1" },
 };
 
+// ── Regional locations (confirmed from Airtable / USA Fencing) ─
+const REGIONAL_LOCS = {
+  "2026-08-22":"Various, USA","2026-09-06":"Various, USA","2026-09-12":"Various, USA",
+  "2026-09-19":"Various, USA","2026-09-26":"Various, USA","2026-10-03":"Various, USA",
+  "2026-10-17":"Various, USA","2026-10-24":"Various, USA","2026-11-07":"Various, USA",
+  "2026-11-14":"Various, USA","2026-12-05":"Various, USA","2026-12-12":"Various, USA",
+  "2027-01-09":"Various, USA","2027-01-16":"Various, USA","2027-01-23":"Various, USA",
+  "2027-02-06":"Various, USA","2027-02-13":"Various, USA","2027-02-20":"Various, USA",
+  "2027-02-27":"Various, USA","2027-03-06":"Various, USA","2027-03-13":"Various, USA",
+  "2027-03-20":"Various, USA","2027-03-27":"Various, USA","2027-04-10":"Various, USA",
+  "2027-04-17":"Various, USA","2027-04-24":"Various, USA","2027-05-01":"Various, USA",
+  "2027-05-09":"Various, USA",
+};
+
 // ── State ─────────────────────────────────────────────────────
 let currentTab = "home";
 let currentFilter = "all";
@@ -66,11 +80,87 @@ function fmtMonth(dateStr) {
 function allEvents() {
   const evs = [...EVENTS.map(e => ({...e, source:"USA Fencing"}))];
   REGIONAL.forEach(d => evs.push({
-    date:d, name:"ROC Regional Weekend", loc:"Various (check Airtable)",
+    date:d, name:"ROC Regional Weekend", loc:REGIONAL_LOCS[d] || "Various, USA",
     tier:"regional", pts:PTS.regional_win, source:"USA Fencing Regional",
-    notes:"Match reps only — does NOT build Div I Trial pts."
+    notes:"Match reps only — does NOT build Div I Trial pts. Check Airtable for host city."
   }));
   return evs.filter(e => daysUntil(e.date) >= 0).sort((a,b) => a.date.localeCompare(b.date));
+}
+
+// ── Render: Grid Calendar ─────────────────────────────────────
+function renderGrid() {
+  const evMap = {};
+  allEvents().forEach(ev => {
+    const key = ev.date.substring(0,10);
+    if (!evMap[key]) evMap[key] = [];
+    evMap[key].push(ev);
+  });
+
+  const GRID_MONTHS = [
+    {y:2026,m:8},{y:2026,m:9},{y:2026,m:10},{y:2026,m:11},{y:2026,m:12},
+    {y:2027,m:1},{y:2027,m:2},{y:2027,m:3},{y:2027,m:4},{y:2027,m:5},{y:2027,m:6},{y:2027,m:7},
+  ];
+  const MONTHS_SHORT = ["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const MONTHS_FULL  = ["","January","February","March","April","May","June","July","August","September","October","November","December"];
+  const DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+  const todayStr = new Date().toISOString().substring(0,10);
+
+  let html = `<div class="grid-legend">
+    <span class="gl-item" style="background:#dbeafe;border-color:#2563eb">🎯 Target</span>
+    <span class="gl-item" style="background:#fef9c3;border-color:#d97706">🇺🇸 National</span>
+    <span class="gl-item" style="background:#ffedd5;border-color:#ea580c">📋 Regional</span>
+    <span class="gl-item" style="background:#ccfbf1;border-color:#0d9488">🇪🇸 Spain</span>
+  </div>`;
+
+  GRID_MONTHS.forEach(({y, m}) => {
+    const firstDow = new Date(y, m-1, 1).getDay();
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const weeks = Math.ceil((firstDow + daysInMonth) / 7);
+
+    html += `<div class="grid-month">
+      <div class="grid-month-title">${MONTHS_FULL[m]} ${y}</div>
+      <div class="grid-dow-row">${DAYS.map(d=>`<div class="grid-dow">${d}</div>`).join("")}</div>`;
+
+    for (let wk = 0; wk < weeks; wk++) {
+      html += `<div class="grid-week">`;
+      for (let dow = 0; dow < 7; dow++) {
+        const dom = wk * 7 + dow - firstDow + 1;
+        if (dom < 1 || dom > daysInMonth) {
+          html += `<div class="grid-cell empty"></div>`;
+        } else {
+          const key = `${y}-${String(m).padStart(2,"0")}-${String(dom).padStart(2,"0")}`;
+          const evs = evMap[key] || [];
+          const isToday = key === todayStr;
+          const ev = evs[0];
+          const t = ev ? TIER[ev.tier] : null;
+          html += `<div class="grid-cell ${isToday?"grid-today":""}"
+            style="${t ? `background:${t.bg};border:1px solid ${t.border}` : ""}"
+            ${ev ? `onclick="showEventPopup(${JSON.stringify(JSON.stringify(ev))})"` : ""}>
+            <div class="grid-dom" style="${isToday?"color:#fff;background:#2563eb;border-radius:99px":""}">${dom}</div>
+            ${ev ? `<div class="grid-ev-dot" style="background:${t.border}">${t.emoji}</div>` : ""}
+          </div>`;
+        }
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+
+  return html + `<div id="event-popup" class="popup-overlay" style="display:none" onclick="closePopup()">
+    <div class="popup-card" onclick="event.stopPropagation()">
+      <div id="popup-content"></div>
+      <button class="popup-close" onclick="closePopup()">Close</button>
+    </div>
+  </div>`;
+}
+
+function showEventPopup(evJson) {
+  const ev = JSON.parse(evJson);
+  document.getElementById("popup-content").innerHTML = renderEventCard(ev);
+  document.getElementById("event-popup").style.display = "flex";
+}
+function closePopup() {
+  document.getElementById("event-popup").style.display = "none";
 }
 
 function urgencyBadge(days) {
@@ -300,6 +390,7 @@ function renderPage() {
   if (currentTab === "home")   content.innerHTML = renderHome();
   if (currentTab === "events") content.innerHTML = renderEvents();
   if (currentTab === "points") content.innerHTML = renderPoints();
+  if (currentTab === "grid")   content.innerHTML = renderGrid();
   content.scrollTop = 0;
 }
 

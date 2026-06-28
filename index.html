@@ -234,6 +234,65 @@
     .scenario-note   { font-size: 11px; color: var(--gray); }
 
     .empty { text-align: center; color: var(--gray); padding: 40px; font-size: 14px; }
+
+    /* ── Grid Calendar ── */
+    .grid-legend {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+    }
+    .gl-item {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 99px; border: 1px solid;
+    }
+    .grid-month {
+      background: white; border-radius: 10px; padding: 10px;
+      margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .grid-month-title {
+      font-size: 14px; font-weight: 700; color: var(--navy);
+      margin-bottom: 8px; text-align: center;
+    }
+    .grid-dow-row {
+      display: grid; grid-template-columns: repeat(7,1fr);
+      margin-bottom: 4px;
+    }
+    .grid-dow {
+      text-align: center; font-size: 10px; font-weight: 700;
+      color: var(--gray); padding: 2px 0;
+    }
+    .grid-week {
+      display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 2px;
+    }
+    .grid-cell {
+      aspect-ratio: 1; border-radius: 6px; padding: 2px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: flex-start; cursor: pointer; border: 1px solid transparent;
+      min-height: 36px;
+    }
+    .grid-cell.empty { cursor: default; }
+    .grid-today { outline: 2px solid #2563eb; }
+    .grid-dom {
+      font-size: 11px; font-weight: 600; color: var(--navy);
+      width: 18px; height: 18px; display: flex; align-items: center;
+      justify-content: center;
+    }
+    .grid-ev-dot { font-size: 13px; margin-top: 1px; }
+
+    /* ── Popup ── */
+    .popup-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 999; padding: 16px;
+    }
+    .popup-card {
+      background: white; border-radius: 16px; width: 100%;
+      max-width: 480px; overflow: hidden;
+      max-height: 80dvh; overflow-y: auto;
+    }
+    .popup-close {
+      width: 100%; padding: 14px; border: none; border-top: 1px solid #e5e7eb;
+      background: white; font-size: 15px; font-weight: 600; color: #2563eb;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -253,6 +312,9 @@
     </button>
     <button class="tab-btn" data-tab="events" onclick="setTab('events')">
       <span class="tab-icon">📅</span>Events
+    </button>
+    <button class="tab-btn" data-tab="grid" onclick="setTab('grid')">
+      <span class="tab-icon">🗓</span>Grid
     </button>
     <button class="tab-btn" data-tab="points" onclick="setTab('points')">
       <span class="tab-icon">🏆</span>Points
