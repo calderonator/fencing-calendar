@@ -96,13 +96,47 @@ function fmtMonth(dateStr) {
   return parseDate(dateStr).toLocaleDateString("en-US", { month:"long", year:"numeric" });
 }
 
+// Live events fetched from events.json (updated weekly by GitHub Actions)
+let LIVE_EVENTS = [];
+
+async function loadLiveEvents() {
+  try {
+    const res = await fetch("events.json?t=" + Date.now());
+    const data = await res.json();
+    LIVE_EVENTS = data.events || [];
+    console.log("Loaded", LIVE_EVENTS.length, "live events, updated", data.updated);
+  } catch (e) {
+    console.warn("Could not load events.json:", e);
+  }
+  renderPage();
+}
+
 function allEvents() {
   const evs = [...EVENTS.map(e => ({...e, source:"USA Fencing"}))];
+
+  // Merge live events (AskFred, FIE, RFEE) — skip duplicates by date+name
+  const existing = new Set(evs.map(e => e.date + "|" + e.name));
+  for (const ev of LIVE_EVENTS) {
+    const key = ev.date + "|" + ev.name;
+    if (!existing.has(key)) {
+      existing.add(key);
+      const tierMap = { local:"local", training:"training", worldcup:"intl", grandprix:"intl", satellite:"intl", championship:"national", intl:"intl" };
+      evs.push({
+        ...ev,
+        tier: tierMap[ev.tier] || "local",
+        pts: ev.tier === "local" ? PTS.local_std : ev.tier === "training" ? 0 : PTS.intl,
+        isWorldCup: ["worldcup","grandprix","satellite","intl"].includes(ev.tier),
+        notes: ev.source === "FIE" ? "FIE international event." : ev.source === "RFEE" ? "Spain training event — 0 USA Trial pts." : "AskFred local event — check for D1A eligibility.",
+      });
+    }
+  }
+
   REGIONAL.forEach(d => evs.push({
     date:d, name:"ROC Regional Weekend", loc:REGIONAL_LOCS[d] || "Various, USA",
     tier:"regional", pts:PTS.regional_win, source:"USA Fencing Regional",
     notes:"D1A events at this weekend count for Trial pts. Check Airtable for full schedule."
   }));
+
   const upcoming = evs.filter(e => daysUntil(e.date) >= 0).sort((a,b) => a.date.localeCompare(b.date));
 
   // Dynamically assign Primary Target
@@ -111,7 +145,7 @@ function allEvents() {
   const targetEv = upcoming.find(e => e[targetKey]);
   if (targetEv) {
     targetEv.tier = "target";
-    targetEv.notes = "🎯 PRIMARY TARGET. " + targetEv.notes;
+    targetEv.notes = "🎯 PRIMARY TARGET. " + (targetEv.notes || "");
   }
 
   return upcoming;
@@ -419,5 +453,6 @@ window.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }
-  renderPage();
+  renderPage();          // show immediately with hardcoded data
+  loadLiveEvents();      // then fetch live data and re-render
 });

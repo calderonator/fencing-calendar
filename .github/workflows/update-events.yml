@@ -1,0 +1,40 @@
+name: Update Fencing Events
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'   # Every Monday at 7am UTC
+  workflow_dispatch:        # Manual trigger from GitHub Actions tab
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 playwright
+          playwright install chromium --with-deps
+
+      - name: Fetch events
+        run: python scripts/fetch_all.py
+
+      - name: Commit events.json if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add events.json
+          if git diff --staged --quiet; then
+            echo "No changes to events.json"
+          else
+            git commit -m "Auto-update events.json $(date -u +%Y-%m-%d)"
+            git push
+          fi

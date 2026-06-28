@@ -1,5 +1,5 @@
-const CACHE = "fencing-v8";
-const ASSETS = ["/", "/index.html", "/app.js", "/manifest.json"];
+const CACHE = "fencing-v9";
+const ASSETS = ["/", "/index.html", "/app.js", "/manifest.json", "/events.json"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
