@@ -248,16 +248,6 @@ function renderHome() {
     <div class="section-title">📅 Next Up</div>
     ${evs.slice(0,5).map(e => `<div class="event-card">${renderEventCard(e)}</div>`).join("")}
 
-    <div class="section-title">✅ Eligibility</div>
-    <div class="info-card green">
-      <b>✅ Eligible:</b> Division I Senior Men's Épée · Open/Div IA events
-    </div>
-    <div class="info-card red">
-      <b>❌ Not eligible:</b> SJCC · Junior Olympics · Youth events
-    </div>
-    <div class="info-card orange">
-      <b>⚠️ ROC events</b> do NOT build Div I Trial pts
-    </div>
   `;
 }
 
