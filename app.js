@@ -202,7 +202,7 @@ function renderGrid() {
           const t = ev ? TIER[ev.tier] : null;
           html += `<div class="grid-cell ${isToday?"grid-today":""}"
             style="${t ? `background:${t.bg};border:1px solid ${t.border}` : ""}"
-            ${ev ? `onclick="showEventPopup(${JSON.stringify(JSON.stringify(ev))})"` : ""}>
+            ${ev ? `onclick="goToEvent('${key}')"` : ""}>
             <div class="grid-dom" style="${isToday?"color:#fff;background:#2563eb;border-radius:99px":""}">${dom}</div>
             ${ev ? `<div class="grid-ev-dot">${t.emoji}</div>` : ""}
           </div>`;
@@ -221,6 +221,20 @@ function renderGrid() {
   </div>`;
 }
 
+function goToEvent(date) {
+  currentTab = "events";
+  currentFilter = "all";
+  renderPage();
+  // After render, scroll to + highlight the card for this date
+  setTimeout(() => {
+    const card = document.querySelector(`.event-card[data-date="${date}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.classList.add("event-highlight");
+      setTimeout(() => card.classList.remove("event-highlight"), 1800);
+    }
+  }, 80);
+}
 function showEventPopup(evJson) {
   const ev = JSON.parse(evJson);
   document.getElementById("popup-content").innerHTML = renderEventCard(ev);
@@ -329,7 +343,7 @@ function renderEvents() {
     </div>
     ${Object.entries(months).map(([month, evs]) => `
       <div class="month-header">${month.toUpperCase()}</div>
-      ${evs.map(e => `<div class="event-card">${renderEventCard(e)}</div>`).join("")}
+      ${evs.map(e => `<div class="event-card" data-date="${e.date}">${renderEventCard(e)}</div>`).join("")}
     `).join("")}
     ${evs.length === 0 ? `<div class="empty">No events for this filter.</div>` : ""}
   `;

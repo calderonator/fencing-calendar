@@ -276,6 +276,12 @@
       justify-content: center;
     }
     .grid-ev-dot { font-size: 13px; margin-top: 1px; }
+    @keyframes highlight-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(37,99,235,.6); }
+      50%  { box-shadow: 0 0 0 8px rgba(37,99,235,.15); }
+      100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+    }
+    .event-highlight { animation: highlight-pulse 1.8s ease; outline: 2px solid #2563eb; border-radius: 10px; }
     .grid-cell-ev { min-height: 64px; justify-content: flex-start; }
     .grid-ev-name { font-size: 9px; font-weight: 700; line-height: 1.2; margin-top: 2px; text-align: center; word-break: break-word; }
     .grid-ev-loc  { font-size: 8px; line-height: 1.2; margin-top: 1px; text-align: center; opacity: 0.8; }
