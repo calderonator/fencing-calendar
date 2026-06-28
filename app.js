@@ -510,6 +510,10 @@ function flightDateStr(dateStr, offsetDays) {
 function googleFlightsUrl(from, to, depart, ret) {
   return `https://www.google.com/flights#flt=${from}.${to}.${depart}*${to}.${from}.${ret};c:USD;e:1;s:0*1;sd:1;t:f`;
 }
+function googleFlightsViaSD(from, to, departSpain, departSD, ret) {
+  // Multi-city: Spain → San Diego → Event City → Spain
+  return `https://www.google.com/flights#flt=${from}.SAN.${departSpain}*SAN.${to}.${departSD}*${to}.${from}.${ret};c:USD;e:1;s:0*1;sd:1;t:f`;
+}
 
 function renderFlights() {
   const evs = allEvents().filter(e =>
@@ -561,19 +565,26 @@ function renderFlights() {
                 style="flex:1;display:block;background:#1d4ed8;color:white;text-align:center;
                        padding:10px;border-radius:8px;font-size:13px;font-weight:700;
                        text-decoration:none">
-                ✈️ Search Flights → ${iata}
+                ✈️ ${flightFrom} → ${iata} → ${flightFrom}
               </a>` : `
               <span style="flex:1;text-align:center;padding:10px;border-radius:8px;
                            background:#f3f4f6;color:#9ca3af;font-size:13px">
                 ✈️ ${city} — airport not mapped yet
               </span>`}
             ${url ? `
+              <a href="${googleFlightsViaSD(flightFrom, iata, flightDateStr(ev.date,-4), depart, ret)}" target="_blank" rel="noopener"
+                style="flex:1;display:block;background:#16a34a;color:white;text-align:center;
+                       padding:10px;border-radius:8px;font-size:13px;font-weight:700;
+                       text-decoration:none">
+                🏠 Via San Diego
+              </a>` : ""}
+            ${url ? `
               <a href="https://www.skyscanner.com/transport/flights/${flightFrom.toLowerCase()}/${iata.toLowerCase()}/${depart.replace(/-/g,"").slice(2)}/${ret.replace(/-/g,"").slice(2)}/?adults=1&cabinclass=economy"
                 target="_blank" rel="noopener"
                 style="background:#00a1df;color:white;text-align:center;
                        padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;
                        text-decoration:none">
-                Skyscanner
+                Sky
               </a>` : ""}
           </div>
         </div>`;
