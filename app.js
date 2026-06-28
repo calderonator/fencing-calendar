@@ -42,36 +42,35 @@ const TIER = {
 };
 
 // ── Regional locations (from Airtable 26-27 Reg Cal List) ─────
-// D1A = Diego-eligible Senior Épée event exists that weekend
 const REGIONAL_LOCS = {
-  "2026-08-22":"Edison, NJ (D1A avail.)",
-  "2026-09-06":"Ontario, CA (D1A avail.)",
-  "2026-09-12":"Air Force Academy, CO (D1A avail.)",
-  "2026-09-19":"La Jolla, CA · Myrtle Beach, SC (D1A)",
-  "2026-09-26":"Evanston, IL · Suffern, NY (D1A)",
-  "2026-10-03":"Seattle, WA (D1A avail.)",
-  "2026-10-17":"Houston, TX (D1A avail.)",
-  "2026-10-24":"Santa Clara, CA (D1A avail.)",
-  "2026-11-07":"Grand Rapids, MI (D1A avail.)",
-  "2026-11-14":"Metairie, LA (D1A avail.)",
-  "2026-12-05":"Various, USA (youth/JNR only)",
-  "2026-12-12":"Myrtle Beach, SC (D1A avail.)",
-  "2027-01-09":"Various, USA (youth/JNR only)",
-  "2027-01-16":"Bellevue, WA · San Diego, CA (D1A)",
-  "2027-01-23":"Jacksonville, FL (D1A avail.)",
-  "2027-02-06":"Providence, RI (D1A avail.)",
-  "2027-02-13":"Various, USA (youth/JNR only)",
-  "2027-02-20":"Various, USA (youth/JNR only)",
-  "2027-02-27":"Phoenixville, PA (D1A avail.)",
-  "2027-03-06":"Various, USA (youth/JNR only)",
-  "2027-03-13":"Grand Rapids, MI · College Park, MD (D1A)",
-  "2027-03-20":"Various, USA (youth/JNR only)",
-  "2027-03-27":"Libertyville, IL · Dallas, TX (D1A)",
-  "2027-04-10":"Houston, TX (D1A avail.)",
-  "2027-04-17":"Various, USA (youth/JNR only)",
-  "2027-04-24":"Various, USA (youth/JNR only)",
-  "2027-05-01":"Tigard, OR (D1A avail.)",
-  "2027-05-09":"Various, USA (youth/JNR only)",
+  "2026-08-22":"Edison, NJ",
+  "2026-09-06":"Ontario, CA",
+  "2026-09-12":"Air Force Academy, CO",
+  "2026-09-19":"La Jolla, CA · Myrtle Beach, SC",
+  "2026-09-26":"Evanston, IL · Suffern, NY",
+  "2026-10-03":"Seattle, WA",
+  "2026-10-17":"Houston, TX",
+  "2026-10-24":"Santa Clara, CA",
+  "2026-11-07":"Grand Rapids, MI",
+  "2026-11-14":"Metairie, LA",
+  "2026-12-05":"No D1A events — check Airtable",
+  "2026-12-12":"Myrtle Beach, SC",
+  "2027-01-09":"No D1A events — check Airtable",
+  "2027-01-16":"Bellevue, WA · San Diego, CA",
+  "2027-01-23":"Jacksonville, FL",
+  "2027-02-06":"Providence, RI",
+  "2027-02-13":"No D1A events — check Airtable",
+  "2027-02-20":"No D1A events — check Airtable",
+  "2027-02-27":"Phoenixville, PA",
+  "2027-03-06":"No D1A events — check Airtable",
+  "2027-03-13":"Grand Rapids, MI · College Park, MD",
+  "2027-03-20":"No D1A events — check Airtable",
+  "2027-03-27":"Libertyville, IL · Dallas, TX",
+  "2027-04-10":"Houston, TX",
+  "2027-04-17":"No D1A events — check Airtable",
+  "2027-04-24":"No D1A events — check Airtable",
+  "2027-05-01":"Tigard, OR",
+  "2027-05-09":"No D1A events — check Airtable",
 };
 
 // ── State ─────────────────────────────────────────────────────
@@ -101,7 +100,7 @@ function allEvents() {
   REGIONAL.forEach(d => evs.push({
     date:d, name:"ROC Regional Weekend", loc:REGIONAL_LOCS[d] || "Various, USA",
     tier:"regional", pts:PTS.regional_win, source:"USA Fencing Regional",
-    notes:"Match reps only — does NOT build Div I Trial pts. Check Airtable for host city."
+    notes:"D1A events at this weekend count for Trial pts. Check Airtable for full schedule."
   }));
   return evs.filter(e => daysUntil(e.date) >= 0).sort((a,b) => a.date.localeCompare(b.date));
 }
