@@ -218,7 +218,7 @@ function renderGrid() {
             style="${t ? `background:${t.bg};border:1px solid ${t.border}` : ""}"
             ${ev ? `onclick="goToEvent('${key}')"` : ""}>
             ${isGoingDay ? `<div class="grid-going-check">✓</div>` : ""}
-            <div class="grid-dom" style="${isToday?"color:#fff;background:#2563eb;border-radius:99px":""}">${dom}</div>
+            <div class="grid-dom" style="${isToday?"color:#fff;background:#dc2626;border-radius:99px":""}">${dom}</div>
             ${ev ? `<div class="grid-ev-dot">${t.emoji}</div>` : ""}
           </div>`;
         }
@@ -281,6 +281,13 @@ function renderHome() {
       <div class="hero-title">🤺 ${FENCER.name}</div>
       <div class="hero-sub">${FENCER.weapon} · Division I · ${FENCER.season}</div>
     </div>
+
+    <button onclick="sendToClaude()"
+      style="width:100%;background:#1d4ed8;color:#fff;border:none;padding:12px;border-radius:10px;
+             font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;
+             box-shadow:0 1px 3px rgba(0,0,0,.12)">
+      📤 Send my data to Claude
+    </button>
 
     <div class="stats-grid">
       <div class="stat-card" style="border-color:#dc2626">
@@ -361,9 +368,9 @@ function renderEvents() {
     ${currentFilter==="mine" ? `
       <div class="source-note" style="display:flex;flex-direction:column;gap:8px">
         <span>🔔 You'll get an alert the moment registration opens for these events + all NACs.</span>
-        <button onclick="exportWatchlist()"
+        <button onclick="sendToClaude()"
           style="background:#1d4ed8;color:#fff;border:none;padding:9px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
-          📤 Export watch list (sync alerts)
+          📤 Send my data to Claude
         </button>
       </div>` : ""}
     ${Object.entries(months).map(([month, evs]) => `
@@ -374,9 +381,10 @@ function renderEvents() {
   `;
 }
 
-// Build the watch list (all NACs + checked-off events) and copy it so it can
-// be synced to the cloud monitor that emails/pushes when registration opens.
-function exportWatchlist() {
+// Build a snapshot (all NACs + the events Diego checked off) and copy it so he
+// can paste it into the Claude chat — that's how data flows from phone → Claude,
+// who then syncs the watch list / makes changes that flow back via the app.
+function sendToClaude() {
   const nacs = EVENTS.filter(e => e.isNAC).map(e => ({ date:e.date, name:e.name, loc:e.loc, source:"NAC" }));
   const going = allEvents().filter(isGoing).map(e => ({ date:e.date, name:e.name, loc:e.loc, source:"going" }));
   const seen = new Set();
@@ -386,12 +394,20 @@ function exportWatchlist() {
     seen.add(k); return true;
   }).sort((a,b) => a.date.localeCompare(b.date));
 
-  const payload = JSON.stringify({ updated: new Date().toISOString(), events }, null, 2);
-  const done = () => alert("Watch list copied!\n\nPaste it to Claude (this chat owns the calendar) and it'll sync your alerts.\n\n" + events.length + " events watched.");
+  const goingCount = going.length;
+  const payload = "FENCING CALENDAR SYNC — paste this to Claude:\n" +
+    JSON.stringify({ updated: new Date().toISOString(), rank: FENCER.rank, points: FENCER.points, events }, null, 2);
+
+  const done = () => alert(
+    "Copied! 📋\n\n" +
+    "Open the Claude chat and paste it in. Claude will sync your alerts and can " +
+    "make any changes you ask for.\n\n" +
+    events.length + " events (" + goingCount + " you're going to + all NACs)."
+  );
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(payload).then(done, () => prompt("Copy this watch list and paste to Claude:", payload));
+    navigator.clipboard.writeText(payload).then(done, () => prompt("Copy this and paste to Claude:", payload));
   } else {
-    prompt("Copy this watch list and paste to Claude:", payload);
+    prompt("Copy this and paste to Claude:", payload);
   }
 }
 

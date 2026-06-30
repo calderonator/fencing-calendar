@@ -278,7 +278,16 @@
       min-height: 36px;
     }
     .grid-cell.empty { cursor: default; }
-    .grid-today { outline: 2px solid #2563eb; }
+    @keyframes today-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(220,38,38,.65); }
+      70%  { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+      100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+    }
+    .grid-today {
+      outline: 2px solid #dc2626 !important;
+      animation: today-pulse 1.5s ease-out infinite;
+      z-index: 2;
+    }
     .grid-going {
       outline: 3px solid #16a34a !important;
       outline-offset: -1px;
