@@ -462,6 +462,21 @@ function renderPoints() {
   `;
 }
 
+// ── USA Fencing registration deep links ──────────────────────
+// Format: member.usafencing.org/details/tournaments/{ID} — drops you on the
+// registration page (you stay logged in from your browser session). IDs are
+// filled in here once an event is published in the member portal; until then
+// the link goes to the portal's tournament list where the NAC will appear.
+const USAF_TOURNAMENT_IDS = {
+  // "October NAC — Division I Men's Épée": 12345,   // add when published
+};
+const USAF_PORTAL = "https://member.usafencing.org/tournaments";
+
+function usafencingRegUrl(ev) {
+  const id = USAF_TOURNAMENT_IDS[ev.name];
+  return id ? `https://member.usafencing.org/details/tournaments/${id}` : USAF_PORTAL;
+}
+
 // ── Render: Event Card ────────────────────────────────────────
 function renderEventCard(ev) {
   const t = TIER[ev.tier] || TIER.tba;
@@ -490,6 +505,11 @@ function renderEventCard(ev) {
       <div class="going-wrap">
         <button class="going-btn ${going?"on":""}" onclick="event.stopPropagation();toggleGoing('${encodeURIComponent(ev.date+"|"+ev.name)}')">${going?"✓ Going — tap to remove":"+ I'm going"}</button>
       </div>
+      ${ev.isNAC ? `
+      <a href="${usafencingRegUrl(ev)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"
+        style="display:block;margin-top:6px;background:#b91c1c;color:#fff;text-align:center;padding:9px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none">
+        🎟️ Register on USA Fencing →
+      </a>` : ""}
     </div>
   `;
 }
