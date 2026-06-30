@@ -357,12 +357,41 @@ function renderEvents() {
         <button class="filter-btn ${currentFilter===f.key?"active":""}" onclick="setFilter('${f.key}')">${f.label}</button>
       `).join("")}
     </div>
+    ${currentFilter==="mine" ? `
+      <div class="source-note" style="display:flex;flex-direction:column;gap:8px">
+        <span>🔔 You'll get an alert the moment registration opens for these events + all NACs.</span>
+        <button onclick="exportWatchlist()"
+          style="background:#1d4ed8;color:#fff;border:none;padding:9px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
+          📤 Export watch list (sync alerts)
+        </button>
+      </div>` : ""}
     ${Object.entries(months).map(([month, evs]) => `
       <div class="month-header">${month.toUpperCase()}</div>
       ${evs.map(e => `<div class="event-card" data-date="${e.date}">${renderEventCard(e)}</div>`).join("")}
     `).join("")}
     ${evs.length === 0 ? `<div class="empty">No events for this filter.</div>` : ""}
   `;
+}
+
+// Build the watch list (all NACs + checked-off events) and copy it so it can
+// be synced to the cloud monitor that emails/pushes when registration opens.
+function exportWatchlist() {
+  const nacs = EVENTS.filter(e => e.isNAC).map(e => ({ date:e.date, name:e.name, loc:e.loc, source:"NAC" }));
+  const going = allEvents().filter(isGoing).map(e => ({ date:e.date, name:e.name, loc:e.loc, source:"going" }));
+  const seen = new Set();
+  const events = [...nacs, ...going].filter(e => {
+    const k = e.date + "|" + e.name;
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+
+  const payload = JSON.stringify({ updated: new Date().toISOString(), events }, null, 2);
+  const done = () => alert("Watch list copied!\n\nPaste it to Claude (this chat owns the calendar) and it'll sync your alerts.\n\n" + events.length + " events watched.");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(payload).then(done, () => prompt("Copy this watch list and paste to Claude:", payload));
+  } else {
+    prompt("Copy this watch list and paste to Claude:", payload);
+  }
 }
 
 // ── Render: Points ────────────────────────────────────────────

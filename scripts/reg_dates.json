@@ -1,0 +1,35 @@
+{
+  "_comment": "Curated registration-open dates per event, keyed by exact event name. Filled in when USA Fencing publishes them (NAC reg windows arrive with the Athlete Handbook ~Jul 6, 2026). reg_opens blank = not published yet -> monitor falls back to best-effort page scrape. reg_url = page the monitor scrapes for a 'Register' link as an early-open signal.",
+  "events": {
+    "October NAC — Division I Men's Épée": {
+      "reg_opens": "",
+      "reg_url": "https://www.usafencing.org/events-national",
+      "note": "Pending Athlete Handbook ~Jul 6 2026"
+    },
+    "November NAC — Division I Men's Épée": {
+      "reg_opens": "",
+      "reg_url": "https://www.usafencing.org/events-national",
+      "note": "Pending Athlete Handbook ~Jul 6 2026"
+    },
+    "January NAC — Division I Men's Épée": {
+      "reg_opens": "",
+      "reg_url": "https://www.usafencing.org/events-national",
+      "note": "Pending Athlete Handbook ~Jul 6 2026"
+    },
+    "February NAC — Division I Men's Épée (TBA)": {
+      "reg_opens": "",
+      "reg_url": "https://www.usafencing.org/events-national",
+      "note": "Event date/location TBA, announced ~Sep 2026"
+    },
+    "April NAC + Division I National Championship": {
+      "reg_opens": "",
+      "reg_url": "https://www.usafencing.org/events-national",
+      "note": "Pending Athlete Handbook ~Jul 6 2026"
+    },
+    "Summer Nationals / July Challenge": {
+      "reg_opens": "",
+      "reg_url": "https://www.usafencing.org/events-national",
+      "note": "Pending"
+    }
+  }
+}

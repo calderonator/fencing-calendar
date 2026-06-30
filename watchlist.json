@@ -1,0 +1,12 @@
+{
+  "updated": "2026-06-29T00:00:00Z",
+  "note": "All NACs are always watched. 'going' events are appended here when Diego taps Export in the app and the JSON is committed.",
+  "events": [
+    { "date": "2026-10-09", "name": "October NAC — Division I Men's Épée", "loc": "Orlando, FL", "source": "NAC" },
+    { "date": "2026-11-20", "name": "November NAC — Division I Men's Épée", "loc": "Columbus, OH", "source": "NAC" },
+    { "date": "2027-01-08", "name": "January NAC — Division I Men's Épée", "loc": "Oklahoma City, OK", "source": "NAC" },
+    { "date": "2027-02-01", "name": "February NAC — Division I Men's Épée (TBA)", "loc": "TBA", "source": "NAC" },
+    { "date": "2027-04-16", "name": "April NAC + Division I National Championship", "loc": "Cincinnati, OH", "source": "NAC" },
+    { "date": "2027-06-27", "name": "Summer Nationals / July Challenge", "loc": "TBA", "source": "NAC" }
+  ]
+}
