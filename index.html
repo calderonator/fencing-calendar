@@ -309,6 +309,20 @@
       justify-content: center;
     }
     .grid-ev-dot { font-size: 13px; margin-top: 1px; }
+    .grid-dots {
+      display: flex; flex-wrap: wrap; gap: 2px;
+      justify-content: center; align-items: center;
+      margin-top: 2px; max-width: 100%;
+    }
+    .gdot { width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255,255,255,.6); }
+    .gmore { font-size: 8px; font-weight: 800; color: #374151; line-height: 1; }
+    .grid-count {
+      position: absolute; top: -5px; left: -5px;
+      min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
+      background: #0f172a; color: #fff;
+      font-size: 10px; font-weight: 800; line-height: 16px; text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.35); z-index: 3;
+    }
     @keyframes highlight-pulse {
       0%   { box-shadow: 0 0 0 0 rgba(37,99,235,.6); }
       50%  { box-shadow: 0 0 0 8px rgba(37,99,235,.15); }

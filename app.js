@@ -213,13 +213,24 @@ function renderGrid() {
           const isToday = key === todayStr;
           const ev = evs[0];
           const t = ev ? TIER[ev.tier] : null;
+          const multi = evs.length > 1;
           const isGoingDay = ev ? evs.some(e => going.has(e.date + "|" + e.name)) : false;
+          // Busy day → neutral bg so the colored per-event dots read clearly.
+          const cellStyle = !ev ? "" : (multi
+            ? "background:#ffffff;border:1px solid #cbd5e1"
+            : `background:${t.bg};border:1px solid ${t.border}`);
+          const dots = multi
+            ? `<div class="grid-dots">${evs.slice(0,5).map(e =>
+                `<span class="gdot" style="background:${(TIER[e.tier]||TIER.tba).border}"></span>`).join("")
+              }${evs.length > 5 ? `<span class="gmore">+${evs.length-5}</span>` : ""}</div>`
+            : (ev ? `<div class="grid-ev-dot">${t.emoji}</div>` : "");
           html += `<div class="grid-cell ${isToday?"grid-today":""} ${isGoingDay?"grid-going":""}"
-            style="${t ? `background:${t.bg};border:1px solid ${t.border}` : ""}"
+            style="${cellStyle}"
             ${ev ? `onclick="goToEvent('${key}')"` : ""}>
             ${isGoingDay ? `<div class="grid-going-check">✓</div>` : ""}
+            ${multi ? `<div class="grid-count">${evs.length}</div>` : ""}
             <div class="grid-dom" style="${isToday?"color:#fff;background:#dc2626;border-radius:99px":""}">${dom}</div>
-            ${ev ? `<div class="grid-ev-dot">${t.emoji}</div>` : ""}
+            ${dots}
           </div>`;
         }
       }
@@ -240,13 +251,15 @@ function goToEvent(date) {
   currentTab = "events";
   currentFilter = "all";
   renderPage();
-  // After render, scroll to + highlight the card for this date
+  // After render, scroll to + highlight every card on that date (overlaps too)
   setTimeout(() => {
-    const card = document.querySelector(`.event-card[data-date="${date}"]`);
-    if (card) {
-      card.scrollIntoView({ behavior: "smooth", block: "center" });
-      card.classList.add("event-highlight");
-      setTimeout(() => card.classList.remove("event-highlight"), 1800);
+    const cards = document.querySelectorAll(`.event-card[data-date="${date}"]`);
+    if (cards.length) {
+      cards[0].scrollIntoView({ behavior: "smooth", block: "center" });
+      cards.forEach(c => {
+        c.classList.add("event-highlight");
+        setTimeout(() => c.classList.remove("event-highlight"), 1800);
+      });
     }
   }, 80);
 }
