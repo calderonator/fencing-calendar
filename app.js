@@ -217,8 +217,9 @@ function renderGrid() {
           html += `<div class="grid-cell ${isToday?"grid-today":""} ${isGoingDay?"grid-going":""}"
             style="${t ? `background:${t.bg};border:1px solid ${t.border}` : ""}"
             ${ev ? `onclick="goToEvent('${key}')"` : ""}>
+            ${isGoingDay ? `<div class="grid-going-check">✓</div>` : ""}
             <div class="grid-dom" style="${isToday?"color:#fff;background:#2563eb;border-radius:99px":""}">${dom}</div>
-            ${ev ? `<div class="grid-ev-dot">${isGoingDay?"✅":t.emoji}</div>` : ""}
+            ${ev ? `<div class="grid-ev-dot">${t.emoji}</div>` : ""}
           </div>`;
         }
       }
