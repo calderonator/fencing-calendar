@@ -79,6 +79,17 @@ const REGIONAL_LOCS = {
 let currentTab = "home";
 let currentFilter = "all";
 
+// ── Going / my events (check off competitions you're attending) ──
+function goingSet(){ try { return new Set(JSON.parse(localStorage.getItem("fc_going")||"[]")); } catch { return new Set(); } }
+function isGoing(ev){ return goingSet().has(ev.date+"|"+ev.name); }
+function toggleGoing(enc){
+  const key = decodeURIComponent(enc);
+  const s = goingSet();
+  s.has(key) ? s.delete(key) : s.add(key);
+  localStorage.setItem("fc_going", JSON.stringify([...s]));
+  renderPage();
+}
+
 // ── Helpers ───────────────────────────────────────────────────
 function today() {
   const d = new Date(); d.setHours(0,0,0,0); return d;
@@ -317,7 +328,8 @@ function renderHome() {
 // ── Render: Events ────────────────────────────────────────────
 function renderEvents() {
   let evs = allEvents();
-  if (currentFilter !== "all") evs = evs.filter(e => e.tier === currentFilter);
+  if (currentFilter === "mine") evs = evs.filter(isGoing);
+  else if (currentFilter !== "all") evs = evs.filter(e => e.tier === currentFilter);
 
   const months = {};
   evs.forEach(e => {
@@ -328,6 +340,7 @@ function renderEvents() {
 
   const filters = [
     { key:"all",      label:"All" },
+    { key:"mine",     label:"⭐ Mine" },
     { key:"target",   label:"🎯 Target" },
     { key:"national", label:"🇺🇸 National" },
     { key:"intl",     label:"🌍 International" },
@@ -423,6 +436,7 @@ function renderEventCard(ev) {
   const days = daysUntil(ev.date);
   const badge = urgencyBadge(days);
   const pts = ev.pts > 0 ? `+${ev.pts.toLocaleString()} pts` : "no USA pts";
+  const going = isGoing(ev);
 
   return `
     <div class="ec-header" style="background:${t.bg};border-left:4px solid ${t.border}">
@@ -440,6 +454,9 @@ function renderEventCard(ev) {
       <div class="ec-footer">
         <span class="ec-pts" style="color:${t.fg}">${pts}</span>
         ${ev.notes ? `<span class="ec-notes">${ev.notes}</span>` : ""}
+      </div>
+      <div class="going-wrap">
+        <button class="going-btn ${going?"on":""}" onclick="event.stopPropagation();toggleGoing('${encodeURIComponent(ev.date+"|"+ev.name)}')">${going?"✓ Going — tap to remove":"+ I'm going"}</button>
       </div>
     </div>
   `;
@@ -606,7 +623,7 @@ function renderPage() {
 // ── Init ──────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.register("sw.js").catch(() => {});
   }
   renderPage();          // show immediately with hardcoded data
   loadLiveEvents();      // then fetch live data and re-render

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Fencing">
   <title>Diego Calderon — Fencing Calendar</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -234,6 +234,14 @@
     .scenario-note   { font-size: 11px; color: var(--gray); }
 
     .empty { text-align: center; color: var(--gray); padding: 40px; font-size: 14px; }
+
+    /* ── Going / My Events ── */
+    .going-wrap { padding: 8px 12px 12px; }
+    .going-btn {
+      width: 100%; background: #fff; border: 1.5px solid #2563eb; color: #2563eb;
+      border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .going-btn.on { background: #16a34a; border-color: #16a34a; color: #fff; }
 
     /* ── Grid Calendar ── */
     .grid-legend {

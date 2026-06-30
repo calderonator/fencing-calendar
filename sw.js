@@ -1,5 +1,5 @@
-const CACHE = "fencing-v14";
-const ASSETS = ["/", "/index.html", "/app.js", "/manifest.json", "/events.json"];
+const CACHE = "fencing-v15";
+const ASSETS = ["./", "./index.html", "./app.js", "./manifest.json", "./events.json", "./icons/icon.svg"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -14,7 +14,14 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => caches.match("/index.html")))
-  );
+  const url = e.request.url;
+  if (url.includes("events.json")) {
+    e.respondWith(fetch(e.request).then(r => {
+      const copy = r.clone();
+      caches.open(CACHE).then(c => c.put(e.request, copy));
+      return r;
+    }).catch(() => caches.match(e.request)));
+  } else {
+    e.respondWith(caches.match(e.request).then(c => c || fetch(e.request).catch(() => caches.match("./index.html"))));
+  }
 });
