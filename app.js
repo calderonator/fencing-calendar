@@ -90,6 +90,21 @@ function toggleGoing(enc){
   renderPage();
 }
 
+// Events Diego has marked "going" — seeded once per device (via the calendar
+// sync) so they appear on any device, while staying un-toggleable afterward.
+const GOING_DEFAULTS = [
+  "2026-09-19|ROC Regional Weekend",
+  "2026-09-26|ROC Regional Weekend",
+  "2026-10-03|ROC Regional Weekend",
+];
+function seedGoingDefaults(){
+  if (localStorage.getItem("fc_going_seed1")) return;
+  const s = goingSet();
+  GOING_DEFAULTS.forEach(id => s.add(id));
+  localStorage.setItem("fc_going", JSON.stringify([...s]));
+  localStorage.setItem("fc_going_seed1", "1");
+}
+
 // ── Helpers ───────────────────────────────────────────────────
 function today() {
   const d = new Date(); d.setHours(0,0,0,0); return d;
@@ -707,6 +722,7 @@ window.addEventListener("DOMContentLoaded", () => {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
+  seedGoingDefaults();   // one-time seed of synced "going" picks
   renderPage();          // show immediately with hardcoded data
   loadLiveEvents();      // then fetch live data and re-render
 });
