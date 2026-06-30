@@ -1,42 +1,45 @@
-"""Registration-open monitor.
+"""Registration-open monitor — USA Fencing member portal.
 
-Watches all NACs (from watchlist.json) plus any 'going' events Diego exported.
-Fires an alert the moment an event's registration opens, detected by either:
-  1. a known registration-open DATE being reached (reg_dates.json -> reg_opens), or
-  2. best-effort: a 'Register' link appearing on the event's page (early-open signal).
+Primary source: https://member.usafencing.org/search/tournaments — a public,
+server-rendered list where each tournament shows its ID, dates, and registration
+status ("Open registration closes on X" = OPEN, "Registration opens on X" = not
+yet, "Happening now!" = in progress). We match that against the watch list
+(all NACs + Diego's exported "going" events) and email/push the moment a watched
+event flips to open, with the exact deep link member.usafencing.org/details/tournaments/{ID}.
 
-Sends email via Gmail SMTP (creds from env / GitHub secrets). Push is a no-op
-until a push backend is configured (PUSH_ENDPOINT). State is kept in
-reg_state.json so each open is announced exactly once.
+reg_dates.json remains a fallback (known open dates) if a watched event isn't
+found in the portal yet. reg_state.json de-dupes so each open is announced once.
 
-Run from the pwa/ dir:  python scripts/reg_monitor.py
+Run from pwa/:  python scripts/reg_monitor.py
 """
 import json
 import os
 import re
 import smtplib
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import requests
+from bs4 import BeautifulSoup
 
 HERE = os.path.dirname(__file__)
 PWA  = os.path.join(HERE, "..")
+WATCHLIST = os.path.join(PWA, "watchlist.json")
+REG_DATES = os.path.join(HERE, "reg_dates.json")
+STATE     = os.path.join(PWA, "reg_state.json")
 
-WATCHLIST  = os.path.join(PWA, "watchlist.json")
-REG_DATES  = os.path.join(HERE, "reg_dates.json")
-STATE      = os.path.join(PWA, "reg_state.json")
+GMAIL_USER    = os.environ.get("GMAIL_USER", "")
+GMAIL_PASS    = os.environ.get("GMAIL_APP_PASSWORD", "")
+ALERT_TO      = os.environ.get("ALERT_TO", GMAIL_USER)
+PUSH_ENDPOINT = os.environ.get("PUSH_ENDPOINT", "")   # phase 2
 
-GMAIL_USER = os.environ.get("GMAIL_USER", "")
-GMAIL_PASS = os.environ.get("GMAIL_APP_PASSWORD", "")
-ALERT_TO   = os.environ.get("ALERT_TO", GMAIL_USER)
-PUSH_ENDPOINT = os.environ.get("PUSH_ENDPOINT", "")   # phase 2: worker URL
-
-# Heuristics for the best-effort "register link appeared" check.
-OPEN_SIGNALS  = ["register now", "sign up now", "registration is open", "register here"]
-CLOSED_HINTS  = ["registration opens", "registration will open", "opens on", "coming soon"]
+PORTAL   = "https://member.usafencing.org/search/tournaments"
+DETAILS  = "https://member.usafencing.org/details/tournaments/{}"
+HEADERS  = {"User-Agent": "Mozilla/5.0 (fencing-calendar registration monitor)"}
+MONTHS   = {m: i for i, m in enumerate(
+    ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])}
 
 
 def _load(path, default):
@@ -52,53 +55,124 @@ def _save(path, data):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-def _date_open(reg_opens: str, today: date) -> bool:
-    if not reg_opens:
-        return False
+def _parse_start(text):
+    """'Aug 22 - 23, 2026' / 'Oct 9 - 12, 2026' -> date(2026, 10, 9)."""
+    m = re.search(r"([A-Z][a-z]{2})\s+(\d{1,2}).*?(\d{4})", text)
+    if not m:
+        return None
+    mon, day, year = m.group(1), int(m.group(2)), int(m.group(3))
+    if mon not in MONTHS:
+        return None
     try:
-        return today >= datetime.strptime(reg_opens, "%Y-%m-%d").date()
+        return date(year, MONTHS[mon], day)
     except ValueError:
-        return False
+        return None
 
 
-def _scrape_open(url: str) -> bool:
-    """Best-effort: True if the page looks like registration is live.
-    Conservative — only fires on an explicit open signal, never on a closed hint."""
-    if not url:
-        return False
+def fetch_portal(max_horizon_days=150, max_pages=15):
+    """Scrape upcoming tournaments from the portal (sorted soonest-first).
+    Stops once entries pass today+horizon, since reg only opens within months."""
+    horizon = date.today() + timedelta(days=max_horizon_days)
+    out = []
+    for page in range(1, max_pages + 1):
+        url = PORTAL if page == 1 else f"{PORTAL}?page={page}"
+        try:
+            html = requests.get(url, timeout=25, headers=HEADERS).text
+        except requests.RequestException:
+            break
+        soup = BeautifulSoup(html, "html.parser")
+        # Listing anchors use class "no-link d-block"; nav-menu links use "d-flex".
+        anchors = soup.select('a.no-link.d-block[href*="/details/tournaments/"]')
+        if not anchors:
+            break
+        page_max = None
+        for a in anchors:
+            mid = re.search(r"/details/tournaments/(\d+)", a.get("href", ""))
+            if not mid:
+                continue
+            tid  = mid.group(1)
+            name = a.get_text(strip=True)
+            row  = a.find_parent("tr") or a.find_parent("td")
+            row_txt = row.get_text(" ", strip=True) if row else ""
+            start = _parse_start(row_txt)
+            status_el = row.select_one("span.smaller") if row else None
+            status = status_el.get_text(" ", strip=True) if status_el else ""
+            low = status.lower()
+            is_open = "open registration" in low or "registration closes" in low
+            out.append({"id": tid, "name": name, "start": start,
+                        "status": status, "is_open": is_open})
+            if start and (page_max is None or start > page_max):
+                page_max = start
+        if page_max and page_max > horizon:
+            break
+    return out
+
+
+def _norm(s):
+    return re.sub(r"[^a-z0-9 ]", " ", (s or "").lower())
+
+
+def match_portal(watch_ev, portal):
+    """Find the portal entry for a watched event: same start date, plus a name/
+    keyword sanity check. NACs match on date + 'north american cup'/'championship'."""
     try:
-        html = requests.get(url, timeout=20, headers={"User-Agent": "Mozilla/5.0"}).text.lower()
-    except requests.RequestException:
-        return False
-    if any(h in html for h in CLOSED_HINTS):
-        return False
-    return any(s in html for s in OPEN_SIGNALS)
+        wd = datetime.strptime(watch_ev["date"], "%Y-%m-%d").date()
+    except (KeyError, ValueError):
+        return None
+    same_day = [p for p in portal if p["start"] == wd]
+    if not same_day:
+        return None
+    wn = _norm(watch_ev["name"])
+    is_nac = "nac" in wn or "national" in wn or "championship" in wn
+    for p in same_day:
+        pn = _norm(p["name"])
+        if is_nac and ("north american cup" in pn or "national championship" in pn):
+            return p
+    # fall back to token overlap for named (non-generic) events
+    wtok = {t for t in wn.split() if len(t) > 3 and t not in ("division", "mens", "epee")}
+    for p in same_day:
+        ptok = set(_norm(p["name"]).split())
+        if wtok and len(wtok & ptok) >= 2:
+            return p
+    if len(same_day) == 1 and not is_nac:
+        return same_day[0]
+    return None
 
 
 def check():
     today     = date.today()
-    watchlist = _load(WATCHLIST, {"events": []})
+    watchlist = _load(WATCHLIST, {"events": []}).get("events", [])
     reg_dates = _load(REG_DATES, {"events": {}}).get("events", {})
     state     = _load(STATE, {"notified": []})
     notified  = set(state.get("notified", []))
 
+    portal = fetch_portal()
+    print(f"[reg-monitor] Portal entries scanned: {len(portal)}")
+
     opened = []
-    for ev in watchlist.get("events", []):
-        name = ev["name"]
-        key  = name + "|open"
+    for ev in watchlist:
+        key = ev["name"] + "|open"
         if key in notified:
             continue
 
-        rd  = reg_dates.get(name, {})
-        via = None
-        if _date_open(rd.get("reg_opens", ""), today):
-            via = "scheduled date"
-        elif _scrape_open(rd.get("reg_url", "")):
-            via = "register link detected"
+        via = url = None
+        p = match_portal(ev, portal)
+        if p and p["is_open"]:
+            via = f"portal: {p['status']}"
+            url = DETAILS.format(p["id"])
+        else:
+            # fallback: a known scheduled open date in reg_dates.json
+            rd = reg_dates.get(ev["name"], {})
+            ro = rd.get("reg_opens", "")
+            if ro:
+                try:
+                    if today >= datetime.strptime(ro, "%Y-%m-%d").date():
+                        via, url = "scheduled date", rd.get("reg_url", "")
+                except ValueError:
+                    pass
 
         if via:
-            ev = {**ev, "reg_url": rd.get("reg_url", ""), "via": via}
-            opened.append(ev)
+            opened.append({**ev, "reg_url": url or "", "via": via})
             notified.add(key)
 
     if not opened:
@@ -122,18 +196,18 @@ def send_email(events, today):
     if not GMAIL_USER or not GMAIL_PASS:
         print("[reg-monitor] Email skipped — GMAIL_USER / GMAIL_APP_PASSWORD not set.")
         return
-
     cards = ""
     for ev in events:
-        link = f'<a href="{ev["reg_url"]}" style="background:#16a34a;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:bold">Register now →</a>' if ev.get("reg_url") else ""
+        link = (f'<a href="{ev["reg_url"]}" style="background:#16a34a;color:#fff;padding:8px 16px;'
+                f'border-radius:6px;text-decoration:none;font-weight:bold">Register now →</a>'
+                if ev.get("reg_url") else "")
         cards += f"""
         <div style="border:2px solid #16a34a;border-radius:8px;padding:16px;margin:12px 0;background:#f0fdf4">
           <div style="font-size:18px;font-weight:bold;color:#0f172a">🔔 Registration is OPEN — {ev['name']}</div>
           <div style="margin-top:6px;color:#6b7280">{ev.get('date','')} · {ev.get('loc','')}</div>
-          <div style="margin-top:4px;color:#9ca3af;font-size:12px">Detected via: {ev['via']}</div>
+          <div style="margin-top:4px;color:#9ca3af;font-size:12px">{ev['via']}</div>
           <div style="margin-top:12px">{link}</div>
         </div>"""
-
     html = f"""<html><body style="font-family:Arial,sans-serif;max-width:640px;margin:auto">
       <div style="background:#0f172a;color:#fff;padding:20px;border-radius:8px 8px 0 0">
         <h1 style="margin:0;font-size:20px">Registration Just Opened</h1>
@@ -143,14 +217,11 @@ def send_email(events, today):
       <div style="background:#f3f4f6;padding:12px;font-size:12px;color:#6b7280;border-radius:0 0 8px 8px">
         Auto-checked by your fencing calendar · {today.strftime('%B %d, %Y')}
       </div></body></html>"""
-
     plain = "Registration just opened:\n\n" + "\n".join(
-        f"- {ev['name']} ({ev.get('loc','')}) — {ev.get('reg_url','')}" for ev in events
-    )
-
+        f"- {ev['name']} ({ev.get('loc','')}) — {ev.get('reg_url','')}" for ev in events)
     n = len(events)
-    subject = f"🔔 Registration OPEN — {events[0]['name']}" if n == 1 else f"🔔 {n} registrations just opened"
-
+    subject = (f"🔔 Registration OPEN — {events[0]['name']}" if n == 1
+               else f"🔔 {n} registrations just opened")
     msg = MIMEMultipart("alternative")
     msg["Subject"], msg["From"], msg["To"] = subject, GMAIL_USER, ALERT_TO
     msg.attach(MIMEText(plain, "plain", "utf-8"))
@@ -162,8 +233,6 @@ def send_email(events, today):
 
 
 def send_push(events):
-    """Phase 2: POST to the push backend (Cloudflare Worker) which fans out
-    web-push to Diego's subscribed devices. No-op until PUSH_ENDPOINT is set."""
     if not PUSH_ENDPOINT:
         print("[reg-monitor] Push skipped — PUSH_ENDPOINT not configured (phase 2).")
         return
