@@ -189,7 +189,7 @@ function renderGrid() {
     <span class="gl-item" style="background:#f3e8ff;border-color:#9333ea">🌍 Intl</span>
     <span class="gl-item" style="background:#ffedd5;border-color:#ea580c">📋 Regional</span>
     <span class="gl-item" style="background:#ccfbf1;border-color:#0d9488">🇪🇸 Spain</span>
-    <span class="gl-item" style="background:#fff;border-color:#f59e0b">⭐ Going</span>
+    <span class="gl-item" style="background:#dcfce7;border-color:#16a34a">✅ Going</span>
   </div>`;
 
   GRID_MONTHS.forEach(({y, m}) => {
@@ -213,13 +213,12 @@ function renderGrid() {
           const isToday = key === todayStr;
           const ev = evs[0];
           const t = ev ? TIER[ev.tier] : null;
-          const isGoingDay = evs.some(e => going.has(e.date + "|" + e.name));
-          html += `<div class="grid-cell ${isToday?"grid-today":""}"
+          const isGoingDay = ev ? evs.some(e => going.has(e.date + "|" + e.name)) : false;
+          html += `<div class="grid-cell ${isToday?"grid-today":""} ${isGoingDay?"grid-going":""}"
             style="${t ? `background:${t.bg};border:1px solid ${t.border}` : ""}"
             ${ev ? `onclick="goToEvent('${key}')"` : ""}>
-            ${isGoingDay ? `<div class="grid-going-star">⭐</div>` : ""}
             <div class="grid-dom" style="${isToday?"color:#fff;background:#2563eb;border-radius:99px":""}">${dom}</div>
-            ${ev ? `<div class="grid-ev-dot">${t.emoji}</div>` : ""}
+            ${ev ? `<div class="grid-ev-dot">${isGoingDay?"✅":t.emoji}</div>` : ""}
           </div>`;
         }
       }
