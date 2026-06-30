@@ -271,12 +271,14 @@
       display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 2px;
     }
     .grid-cell {
+      position: relative;
       aspect-ratio: 1; border-radius: 6px; padding: 2px;
       display: flex; flex-direction: column; align-items: center;
       justify-content: flex-start; cursor: pointer; border: 1px solid transparent;
       min-height: 36px;
     }
     .grid-cell.empty { cursor: default; }
+    .grid-going-star { position: absolute; top: 0; right: 1px; font-size: 10px; line-height: 1; }
     .grid-today { outline: 2px solid #2563eb; }
     .grid-dom {
       font-size: 11px; font-weight: 600; color: var(--navy);
